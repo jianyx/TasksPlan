@@ -16,6 +16,8 @@
     "drizzle-orm": "^0.45.4",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.6.0",
+    "openai": "^7.34.0",
     "postgres": "^3.4.9"
   },
   "devDependencies": {
@@ -24,6 +26,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.5",
+    "@types/node-cron": "^3.0.11",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
