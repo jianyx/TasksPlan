@@ -7,7 +7,7 @@ import { tasksRouter, subtasksRouter } from './routes/tasks';
 import { statsRouter } from './routes/stats';
 import { externalRouter } from './routes/external';
 import { startCron } from './cron';
-
+const PORT = process.env.PORT || 3001;
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -21,6 +21,6 @@ app.use('/api/subtasks', subtasksRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api', externalRouter);
 
-app.listen(3001, () => console.log('http://localhost:3001'));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 startCron();
