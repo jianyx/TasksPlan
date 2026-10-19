@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import type { Task, Subtask, StatsOverview  } from '@/types';
+import type { TaskDetail, WeekStat } from '@/types';
 
 export const getTasks = () =>
   api.get<Task[]>('/api/tasks').then(r => r.data);
@@ -12,7 +13,8 @@ export const createTask = (payload: {
   description?: string;
   startDate: string;
   endDate: string;
-  dailySubtasks: string[];
+  dailySubtasks?: string[];
+  customSubtasks?: { date: string; title: string }[];
 }) => api.post('/api/tasks', payload).then(r => r.data);
 
 export const toggleSubtask = (id: number, done: boolean) =>
@@ -28,8 +30,25 @@ export const aiPlanTask = (goal: string) =>
   api.post<{
     startDate: string;
     endDate: string;
-    dailySubtasks: string[];
+    dailySubtasks?: string[];
+    customSubtasks?: { date: string; title: string }[];
   }>('/api/tasks/ai-plan', { goal }).then(r => r.data); 
 
 export const getStatsOverview = () =>
   api.get<StatsOverview>('/api/stats/overview').then(r => r.data);
+
+export const getTaskDetail = (id: number) =>
+  api.get<TaskDetail>(`/api/tasks/${id}`).then(r => r.data);
+
+export const updateTask = (
+  id: number,
+  payload: {
+    title?: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+  }
+) => api.patch(`/api/tasks/${id}`, payload).then(r => r.data);
+
+export const getWeekStats = () =>
+  api.get<WeekStat[]>('/api/stats/week').then(r => r.data);

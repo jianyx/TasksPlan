@@ -64,7 +64,7 @@ export default function HistoryPage() {
     <PageShell>
 
       {/* ===== nav ===== */}
-      <AppNav items={[{ href: '/', label: '今日', active: true }, { href: '/tasks/new', label: '新建' }]} />
+      <AppNav items={[{ href: '/', label: '今日', active: true }, { href: '/tasks/new', label: '新建' }, { href: '/settings', label: '设置' }]} />
 
       {/* ===== 主体 ===== */}
       <PageBody>

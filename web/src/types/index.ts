@@ -39,3 +39,24 @@ export type StatsOverview = {
   streak: number;
   activeTasks: number;
 };
+
+export type SubtaskDetail = {
+  id: number;
+  taskId: number;
+  userId: string;
+  title: string;
+  scheduledDate: string;
+  done: boolean;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type TaskDetail = Task & {
+  subtasks: SubtaskDetail[];
+};
+
+export type WeekStat = {
+  date: string;
+  total: number;
+  done: number;
+};

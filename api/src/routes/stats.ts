@@ -89,3 +89,53 @@ statsRouter.get('/overview', async (req: any, res) => {
     res.status(500).json({ error: e.message }); // 发生异常时，返回 500 和错误信息。
   }
 });
+
+// ===== 本周热力图数据 =====
+statsRouter.get('/week', async (req: any, res) => {
+  try {
+    const now = new Date();
+    // 获取本周一
+    const dow = now.getDay() === 0 ? 7 : now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dow - 1));
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(fmtDate(d));
+    }
+
+    // 查询这 7 天的所有子任务
+    const rows = await db.select().from(subtasks).where(and(
+      eq(subtasks.userId, req.userId),
+      sql`${subtasks.scheduledDate} >= ${days[0]}`,
+      sql`${subtasks.scheduledDate} <= ${days[6]}`,
+    ));
+
+    // 按日期汇总
+    const map = new Map<string, { total: number; done: number }>();
+    days.forEach(d => map.set(d, { total: 0, done: 0 }));
+
+    for (const r of rows) {
+      const key = String(r.scheduledDate);
+      const stat = map.get(key);
+      if (stat) {
+        stat.total++;
+        if (r.done) stat.done++;
+      }
+    }
+
+    // 返回 7 天的数据，按周一到周日排列
+    const result = days.map(date => ({
+      date,
+      total: map.get(date)!.total,
+      done: map.get(date)!.done,
+    }));
+
+    res.json(result);
+  } catch (e: any) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});

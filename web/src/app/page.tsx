@@ -14,6 +14,10 @@ import { Metric } from '@/components/ui/metric';
 import { SkeletonLines } from '@/components/ui/skeleton-lines';
 import { EmptyState } from '@/components/ui/empty-state';
 
+import { WeekHeatmap } from '@/components/week-heatmap';
+import { getWeekStats } from '@/services/tasks';
+import type { WeekStat } from '@/types';
+
 export default function HomePage() {
   const router = useRouter();
   const [subs, setSubs] = useState<Subtask[]>([]);
@@ -21,17 +25,20 @@ export default function HomePage() {
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState<number | null>(null);
+  const [weekStats, setWeekStats] = useState<WeekStat[]>([]);
 
   const load = useCallback(() => {
     return Promise.all([
       getTodaySubtasks(),
       getTasks(),
       getStatsOverview(),
+      getWeekStats(),
     ])
-      .then(([s, t, st]) => {
+      .then(([s, t, st, ws]) => {
         setSubs(s);
         setTasks(t);
         setStats(st);
+        setWeekStats(ws);
         setNow(Date.now());
       })
       .catch(() => {
@@ -81,7 +88,7 @@ export default function HomePage() {
   return (
     <PageShell>
       {/* ===== 白色头部区（导航 + 标题） ===== */}
-      <AppNav items={[{ href: '/', label: '今日', active: true }, { href: '/tasks/new', label: '新建' }, { href: '/history', label: '历史' }]} />
+      <AppNav items={[{ href: '/', label: '今日', active: true }, { href: '/tasks/new', label: '新建' }, { href: '/history', label: '历史' }, { href: '/settings', label: '设置' }]} />
         <div className="bg-[#FAFAFA] dark:bg-[#080808] border-b border-[#E5E5E5] dark:border-[#1F1F1F]">
           <div className="max-w-6xl mx-auto px-8 pt-10 pb-12">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
@@ -188,30 +195,32 @@ export default function HomePage() {
                     const isLate = daysLeft < 0;
                     return (
                       <li key={t.id}>
-                        <div className="flex items-baseline justify-between gap-4 mb-1">
-                          <span className="text-[15px] text-[#0A0A0A] dark:text-white truncate">
-                            {t.title}
-                          </span>
-                          <span className={`text-[12px] font-mono whitespace-nowrap ${
-                            isLate ? 'text-[#0A0A0A] dark:text-white' : 'text-[#737373]'
-                          }`}>
-                            {dayLabel}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between mb-2.5">
-                          <span className="text-[12px] text-[#A3A3A3]">
-                            {t.startDate} — {t.endDate}
-                          </span>
-                          <span className="text-[12px] text-[#737373] font-mono">
-                            {t.done}/{t.total}
-                          </span>
-                        </div>
-                        <div className="h-px bg-[#E5E5E5] dark:bg-[#1F1F1F] relative">
-                          <div
-                            className="h-px bg-[#0A0A0A] dark:bg-white transition-all duration-500"
-                            style={{ width: `${percent}%` }}
-                          />
-                        </div>
+                        <Link href={`/tasks/${t.id}`} className="block group">
+                          <div className="flex items-baseline justify-between gap-4 mb-1">
+                            <span className="text-[15px] text-[#0A0A0A] dark:text-white truncate">
+                              {t.title}
+                            </span>
+                            <span className={`text-[12px] font-mono whitespace-nowrap ${
+                              isLate ? 'text-[#0A0A0A] dark:text-white' : 'text-[#737373]'
+                            }`}>
+                              {dayLabel}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between mb-2.5">
+                            <span className="text-[12px] text-[#A3A3A3]">
+                              {t.startDate} — {t.endDate}
+                            </span>
+                            <span className="text-[12px] text-[#737373] font-mono">
+                              {t.done}/{t.total}
+                            </span>
+                          </div>
+                          <div className="h-px bg-[#E5E5E5] dark:bg-[#1F1F1F] relative">
+                            <div
+                              className="h-px bg-[#0A0A0A] dark:bg-white transition-all duration-500"
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                        </Link>
                       </li>
                     );
                   })}
@@ -223,12 +232,13 @@ export default function HomePage() {
           {/* ===== 右栏：辅助信息 ===== */}
           <aside className="lg:col-span-4 space-y-10">
             <section>
-              <SectionTitle>本周节奏</SectionTitle>
-              {stats && (
-                <div className="space-y-4">
-                  <ProgressRow label="完成率" done={stats.weekDone} total={stats.weekTotal} />
-                  <ProgressRow label="今日" done={stats.todayDone} total={stats.todayTotal} />
-                </div>
+              <SectionTitle>本周热力图</SectionTitle>
+              {loading ? (
+                <div className="h-20 bg-[#E5E5E5] dark:bg-[#1F1F1F] rounded animate-pulse" />
+              ) : weekStats.length > 0 ? (
+                <WeekHeatmap data={weekStats} />
+              ) : (
+                <p className="text-[13px] text-[#A3A3A3]">暂无数据</p>
               )}
             </section>
 
