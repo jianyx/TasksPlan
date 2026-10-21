@@ -10,10 +10,12 @@ import { SectionTitle } from '@/components/ui/section-title';
 import { SkeletonLines } from '@/components/ui/skeleton-lines';
 import { EmptyState } from '@/components/ui/empty-state';
 
+
 export default function HistoryPage() {
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedAt, setLoadedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!localStorage.getItem('token')) {
@@ -21,34 +23,41 @@ export default function HistoryPage() {
       return;
     }
     getHistoryTasks()
-      .then(setTasks)
+      .then(historyTasks => {
+        // 数据加载成功时记录时间快照，统计与分组共用该时间。
+        setLoadedAt(new Date());
+        setTasks(historyTasks);
+      })
       .catch(() => router.push('/login'))
       .finally(() => setLoading(false));
-  }, []);;
+  }, [router]);
+
+  // 本月完成数由任务和时间快照派生，无需额外的 state 与 Effect。
+  const thisMonthCount = useMemo(() => {
+    if (!loadedAt) return 0;
+    return tasks.filter(t => {
+      if (!t.completedAt) return false;
+      const d = new Date(t.completedAt);
+      return d.getFullYear() === loadedAt.getFullYear() && d.getMonth() === loadedAt.getMonth();
+    }).length;
+  }, [tasks, loadedAt]);
 
   // ===== 按完成月份分组 =====
   const grouped = useMemo(() => {
     const map = new Map<string, Task[]>();
+    if (!loadedAt) return Array.from(map.entries());
     for (const t of tasks) {
-      const d = t.completedAt ? new Date(t.completedAt) : new Date();
+      const d = t.completedAt ? new Date(t.completedAt) : loadedAt;
       const key = `${d.getFullYear()}年${d.getMonth() + 1}月`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(t);
     }
     return Array.from(map.entries());
-  }, [tasks]);
+  }, [tasks, loadedAt]);
 
   // ===== 统计 =====
   const totalTasks = tasks.length;
   const totalSubtasks = tasks.reduce((sum, t) => sum + t.total, 0);
-  const thisMonthCount = useMemo(() => {
-    const now = new Date();
-    return tasks.filter(t => {
-      if (!t.completedAt) return false;
-      const d = new Date(t.completedAt);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }).length;
-  }, [tasks]);
 
   const formatDate = (s: string | null) => {
     if (!s) return '';

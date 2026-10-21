@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { createTask, aiPlanTask } from "@/services/tasks";
 
@@ -14,16 +14,15 @@ function toDateString(d: Date) {
     return `${y}-${m}-${day}`;
 }
 
+// 仅用于区分水合阶段，不订阅外部事件，并保持函数引用稳定。
+const subscribe = () => () => {};
+
 export default function NewTaskPage() {
     const router = useRouter();
 
     const [mode, setMode] = useState<"manual" | "ai">("manual");
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [startDate, setStartDate] = useState(() => toDateString(new Date()));
-    const [endDate, setEndDate] = useState(() =>
-        toDateString(new Date(Date.now() + 7 * 86400000)),
-    );
 
     const [goal, setGoal] = useState("");
     const [error, setError] = useState("");
@@ -34,6 +33,15 @@ export default function NewTaskPage() {
     const [customSubtasks, setCustomSubtasks] = useState<
         { date: string; title: string }[]
     >([]);
+
+    const [startDateValue, setStartDate] = useState(() => toDateString(new Date()));
+    const [endDateValue, setEndDate] = useState(() =>
+        toDateString(new Date(Date.now() + 7 * 86400000)),
+    );
+    const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
+    // 服务端和水合首帧保持空日期，水合后使用浏览器本地的初始值。
+    const startDate = hydrated ? startDateValue : "";
+    const endDate = hydrated ? endDateValue : "";
 
     // 计算预览
     const days = useMemo(() => {
@@ -87,7 +95,7 @@ export default function NewTaskPage() {
         }
     };
 
-      const handleAiPlan = async () => {
+    const handleAiPlan = async () => {
     if (!goal.trim()) return;
     setAiLoading(true);
     setError('');

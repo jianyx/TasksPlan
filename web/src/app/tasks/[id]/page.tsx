@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppNav } from '@/components/layout/app-nav';
@@ -25,21 +25,26 @@ export default function TaskDetailPage() {
   const [editDesc, setEditDesc] = useState('');
   const [editStart, setEditStart] = useState('');
   const [editEnd, setEditEnd] = useState('');
+  const [todayStr, setTodayStr] = useState('');
 
-  const load = async () => {
-    try {
-      const data = await getTaskDetail(id);
-      setTask(data);
-      setEditTitle(data.title);
-      setEditDesc(data.description || '');
-      setEditStart(data.startDate);
-      setEditEnd(data.endDate);
-    } catch {
-      router.push('/');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const load = useCallback(() => {
+    return getTaskDetail(id)
+      .then(data => {
+        setTask(data);
+        setEditTitle(data.title);
+        setEditDesc(data.description || '');
+        setEditStart(data.startDate);
+        setEditEnd(data.endDate);
+        // 随任务数据刷新日期快照，避免在 Effect 中同步更新状态。
+        setTodayStr(new Date().toISOString().slice(0, 10));
+      })
+      .catch(() => {
+        router.push('/');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [id, router]);
 
   useEffect(() => {
     if (!localStorage.getItem('token')) {
@@ -47,7 +52,7 @@ export default function TaskDetailPage() {
       return;
     }
     load();
-  }, [id]);
+  }, [load, router]);
 
   const toggleSub = async (subId: number, done: boolean) => {
     await toggleSubtask(subId, done);
@@ -102,7 +107,6 @@ export default function TaskDetailPage() {
   const daysBetween = (a: string, b: string) =>
     Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / 86400000) + 1;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
     <PageShell>
