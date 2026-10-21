@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppNav } from '@/components/layout/app-nav';
@@ -11,6 +11,21 @@ import { getTaskDetail, updateTask, toggleSubtask, deleteTask } from '@/services
 import type { TaskDetail } from '@/types';
 
 export default function TaskDetailPage() {
+  // 动态路由参数仅在运行时可用，预渲染阶段先显示加载骨架。
+  return (
+    <Suspense fallback={
+      <PageShell>
+        <PageBody>
+          <SkeletonLines count={5} />
+        </PageBody>
+      </PageShell>
+    }>
+      <TaskDetailContent />
+    </Suspense>
+  );
+}
+
+function TaskDetailContent() {
   const router = useRouter();
   const params = useParams();
   const id = Number(params.id);
