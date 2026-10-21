@@ -1,11 +1,12 @@
 "use client";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { createTask, aiPlanTask } from "@/services/tasks";
 
 import { AppNav } from "@/components/layout/app-nav";
 import { PageShell, PageBody } from "@/components/layout/page-shell";
 import { SectionTitle } from "@/components/ui/section-title";
+import { SkeletonLines } from "@/components/ui/skeleton-lines";
 
 function toDateString(d: Date) {
     const y = d.getFullYear();
@@ -18,6 +19,21 @@ function toDateString(d: Date) {
 const subscribe = () => () => {};
 
 export default function NewTaskPage() {
+    // 默认日期依赖当前时间，使用加载边界避免在预渲染时固定日期。
+    return (
+        <Suspense fallback={
+            <PageShell>
+                <PageBody>
+                    <SkeletonLines count={5} />
+                </PageBody>
+            </PageShell>
+        }>
+            <NewTaskContent />
+        </Suspense>
+    );
+}
+
+function NewTaskContent() {
     const router = useRouter();
 
     const [mode, setMode] = useState<"manual" | "ai">("manual");
