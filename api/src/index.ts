@@ -7,7 +7,7 @@ import { tasksRouter, subtasksRouter } from './routes/tasks';
 import { statsRouter } from './routes/stats';
 import { externalRouter } from './routes/external';
 import { startCron } from './cron';
-// const PORT = Number(process.env.PORT || 3001);
+const PORT = Number(process.env.PORT || 3001);
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -21,7 +21,7 @@ app.use('/api/subtasks', subtasksRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api', externalRouter);
 
-app.listen(16377, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port 16377`);
 });
 

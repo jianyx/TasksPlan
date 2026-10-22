@@ -6,7 +6,7 @@ import { today } from './lib/date';
 import { formatDailyMessage, sendDingTalk } from './lib/dingtalk';
 
 export function startCron() {
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule('0 10 * * *', async () => {
     console.log('[cron] 开始推送今日待办...');
     try {
       const allUsers = await db.select().from(users)
